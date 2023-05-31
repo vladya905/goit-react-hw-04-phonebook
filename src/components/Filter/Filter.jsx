@@ -12,7 +12,7 @@ export default function Filter({ value, onChangeFilter }) {
 
 Filter.propTypes = {
   value: PropTypes.string.isRequired,
-  onChangeFilter: PropTypes.func.isRequired,
+  onChangeFilter: PropTypes.func,
 };
 
 
