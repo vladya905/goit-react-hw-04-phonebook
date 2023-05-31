@@ -1,36 +1,31 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import ContactList from './ContactList/ContactList';
 import Filter from './Filter/Filter';
 import ContactForm from './ContactForm/ContactForm';
 
-export default class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-  };
-  #key = 'contacts';
+const App = () => {
+  const initialContacts = [
+    { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+    { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+    { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+    { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+  ];
+    if (!localStorage.getItem('contacts')) 
+    localStorage.setItem('contacts', JSON.stringify(initialContacts));
 
-  componentDidMount() {
-    const parsedContacts = JSON.parse(localStorage.getItem(this.#key));
+  const [contacts, setContacts] = useState(() => {
+    const savedContacts = localStorage.getItem('contacts');
+    return savedContacts !== null ? JSON.parse(savedContacts) : initialContacts;
+  });
+  const [filter, setFilter] = useState('');
 
-    parsedContacts && this.setState({ contacts: parsedContacts });
-  }
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  componentDidUpdate(prevState) {
-    this.state.contacts !== prevState.contacts &&
-      localStorage.setItem(this.#key, JSON.stringify(this.state.contacts));
-  }
-
-  addContact = task => {
-    const searchSameName = this.state.contacts
-      .map(cont => cont.name)
-      .includes(task.name);
+  const addContact = task => {
+    const searchSameName = contacts.map(cont => cont.name).includes(task.name);
 
     if (searchSameName) {
       alert(`${task.name} is already in contacts`);
@@ -42,55 +37,42 @@ export default class App extends Component {
         id: uuidv4(),
       };
 
-      this.setState(prevState => ({
-        contacts: [...prevState.contacts, contact],
-      }));
+      setContacts(prevContacts => [...prevContacts, contact]);
     }
   };
 
-  changeFilter = e => {
+  const changeFilter = e => {
     e.preventDefault();
 
-    this.setState({ filter: e.target.value });
+    setFilter(e.target.value);
   };
 
-  getVisibleContacts = () => {
-    const { contacts, filter } = this.state;
-
+  const getVisibleContacts = () => {
     return contacts.filter(contacts =>
       contacts.name.toLowerCase().includes(filter.toLowerCase()),
     );
   };
 
-  removeContact = contactId => {
-    this.setState(prevState => {
-      return {
-        contacts: prevState.contacts.filter(({ id }) => id !== contactId),
-      };
-    });
+  const removeContact = contactId => {
+    setContacts(prevContacts =>
+      prevContacts.filter(({ id }) => id !== contactId),
+    );
   };
 
-  render() {
-    const { filter } = this.state;
-    const visibleContacts = this.getVisibleContacts();
-    const isVisibleFilter = this.state.contacts.length > 1;
+  const visibleContacts = getVisibleContacts();
+  const isVisibleFilter = contacts.length > 1;
 
-    return (
-      <div>
-        <h1>Phonebook</h1>
+  return (
+    <div>
+      <h1>Phonebook</h1>
+      <ContactForm onAddContact={addContact} />
+      <h2>Contacts</h2>
+      {isVisibleFilter && <Filter value={filter} onChangeFilter={changeFilter} />}
+      {visibleContacts.length > 0 && (
+        <ContactList contacts={visibleContacts} onRemoveContact={removeContact} />
+      )}
+    </div>
+  );
+};
 
-        <ContactForm onAddContact={this.addContact} />
-        <h2>Contacts</h2>
-        {isVisibleFilter && (
-          <Filter value={filter} onChangeFilter={this.changeFilter} />
-        )}
-        {visibleContacts.length > 0 && (
-          <ContactList
-            contacts={visibleContacts}
-            onRemoveContact={this.removeContact}
-          />
-        )}
-      </div>
-    );
-  }
-}
+export default App;
